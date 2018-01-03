@@ -1,4 +1,4 @@
-package com.beepiz.blegattcoroutines
+package com.beepiz.blegattcoroutines.sample
 
 import android.app.Application
 import timber.log.Timber

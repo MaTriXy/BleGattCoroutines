@@ -3,7 +3,7 @@ package com.beepiz.blegattcoroutines.sample.common
 import android.arch.lifecycle.ViewModel
 import android.os.Build.VERSION_CODES.JELLY_BEAN_MR2
 import android.support.annotation.RequiresApi
-import com.beepiz.blegattcoroutines.genericaccess.GenericAccess
+import com.beepiz.blegattcoroutines.experimental.genericaccess.GenericAccess
 import com.beepiz.blegattcoroutines.sample.common.extensions.deviceFor
 import com.beepiz.blegattcoroutines.sample.common.extensions.toast
 import com.beepiz.blegattcoroutines.sample.common.extensions.useBasic
@@ -21,10 +21,11 @@ class MainViewModel : ViewModel() {
     private var operationAttempt: Job? = null
 
     @RequiresApi(JELLY_BEAN_MR2)
-    fun logNameAndAppearance(deviceMacAddress: String = defaultDeviceMacAddress) {
+    fun logNameAndAppearance(deviceMacAddress: String = defaultDeviceMacAddress,
+                             connectionTimeoutInMillis: Long = 5000L) {
         operationAttempt?.cancel()
         operationAttempt = launch(UI) {
-            deviceFor(deviceMacAddress).useBasic { device, services ->
+            deviceFor(deviceMacAddress).useBasic(connectionTimeoutInMillis) { device, services ->
                 services.forEach { Timber.d("Service found with UUID: ${it.uuid}") }
                 with(GenericAccess) {
                     device.readAppearance()

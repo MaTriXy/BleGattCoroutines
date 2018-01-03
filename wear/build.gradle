@@ -6,8 +6,8 @@ android {
     compileSdkVersion projectSdk_version
 
     defaultConfig {
-        applicationId "com.beepiz.blegattcoroutines"
-        minSdkVersion 25
+        applicationId "com.beepiz.blegattcoroutines.sample"
+        minSdkVersion 23
         targetSdkVersion projectSdk_target_version
         versionCode 1
         versionName "1.0"

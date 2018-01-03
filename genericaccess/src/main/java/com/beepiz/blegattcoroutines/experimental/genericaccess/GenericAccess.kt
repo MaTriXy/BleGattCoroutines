@@ -1,4 +1,4 @@
-package com.beepiz.blegattcoroutines.genericaccess
+package com.beepiz.blegattcoroutines.experimental.genericaccess
 
 import android.os.Build.VERSION_CODES.JELLY_BEAN_MR2
 import android.support.annotation.RequiresApi
@@ -45,9 +45,19 @@ object GenericAccess {
     private fun gattUuid(shorthand: Short): UUID {
         val assignedNumberMask = 0x0000_FFFF_0000_0000L // Prevents negative shorthand side-effects.
         val shifted16bits = shorthand.toLong() shl 32 and assignedNumberMask
-        val commonBaseMostSigBits = 0x0000_0000_0000_1000L
         val mostSigBits = commonBaseMostSigBits or shifted16bits
-        val commonBaseLeastSigBits = -9223371485494954757 // unsigned notation: 0x8000_00805f9b34fb
         return UUID(mostSigBits, commonBaseLeastSigBits)
     }
+
+    /**
+     * Most significant (left) part of the common base UUID: `00000000-0000-1000-8000-00805f9b34fb`.
+     */
+    private const val commonBaseMostSigBits = 0x0000_0000_0000_1000L
+
+    /**
+     * Least significant (right) part of the common base UUID: `00000000-0000-1000-8000-00805f9b34fb`.
+     *
+     * Unsigned notation: `0x8000_00805f9b34fb`
+     */
+    private const val commonBaseLeastSigBits = 0x0000_00805f9b34fbL or (0x8000L shl 48)
 }
