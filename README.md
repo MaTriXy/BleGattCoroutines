@@ -1,8 +1,10 @@
 # BleGattCoroutines
-**Make Gatt Great Again!** This library allows easy and safer usage of
-BluetoothGatt in Android. It has also been tested successfully on
-**Android Wear**, with the sample included in this repository. It should
-work similarly on other Android variants such as Android Things.
+
+**Functional Bluetooth GATT** This library allows easy and safer usage of
+BluetoothGatt in Android. Instead of having callbacks to manage, you just
+need to call functions. It has also been tested successfully on
+**Wear OS**, with the sample included in this repository. It should
+work similarly on other Android variants such as Android TV.
 
 It does so by taking advantage of the excellent coroutines feature in the
 Kotlin programming language that allows to write asynchronous code in a
@@ -15,9 +17,13 @@ interacts with Bluetooth Low Energy GATT (General Attribute), that is, the
 connection part of the Bluetooth Low Energy standard.
 
 ## Why this library ?
+
 As we needed to have an Android app interact with a Bluetooth Low Energy
 device, we found the Android BluetoothGatt API and a few RxJava libraries
-built on top of it. Unfortunately, none suited our needs:
+built on top of it.
+
+Unfortunately, none suited our needs:
+
 - The vanilla Android BluetoothGatt API is extremely hard to get right,
 because you have to provide a single instance of what we call a "God
 Callback", that is, an instance of a class with overridable methods that
@@ -29,32 +35,27 @@ or other operation types are dispatched in the same callback method (like
 `onCharacteristicRead(…)`).
 - The RxJava libraries would mean we'd have to learn RxJava, which is known
 to have a steep learning curve, steeper than learning another programming
-language like Kotlin from Java experience, and steeper than learning Kotlin
-coroutines plus [understanding the kotlinx.coroutines library guide](
-https://github.com/Kotlin/kotlinx.coroutines/blob/master/coroutines-guide.md
-). Also, RxJava is a big library, even bigger if you have to use both
-[version 1](http://www.methodscount.com/?lib=io.reactivex%3Arxjava%3A%2B)
-and [version 2](
-http://www.methodscount.com/?lib=io.reactivex.rxjava2%3Arxjava%3A%2B) in the
-same project. In fact, RxJava2 methods count is higher than the sum of
-[Kotlin's stdlib and kotlinx.coroutines](
-http://www.methodscount.com/?lib=org.jetbrains.kotlinx%3Akotlinx-coroutines-android%3A0.20
-).
+language like Kotlin from Java experience, and steeper than learning [Kotlin](https://kotl.in) plus
+[coroutines](https://kotl.in/coroutines). Also, RxJava is a big library,
+even bigger if you have to use both version 1 and version 2 in the same project.
+RxJava2 methods count is higher than the sum of Kotlin's stdlib and kotlinx.coroutines.
 
-## Experimental status
+## Experimental API
 
-_This library is based on the coroutines feature of Kotlin, as well as the
-`kotlinx.coroutines` library, which are both under the experimental status.
-Consequently, this library inherits this experimental status. Also, we are
-expecting to make a few API changes based on your feedback and real world
-usages to improve this library._
+_We are expecting to make a few API changes based on your feedback and real world usages to
+improve this library. You can help by sharing your experience or feedback in the issues having
+a green "help wanted" tag._
 
 **Since the API design it not final at the moment, we're very open to
 feedback while you're using this library.**
 
 _Please, open an issue if something can be improved. If you just want to
 tell the author what you're doing with this library, feel free to reach out
-via [Twitter](https://twitter.com/Louis_CAD) DM, or public tweet._
+via [Twitter](https://twitter.com/Louis_CAD) DM, public tweet._
+
+You can also join the discussion on Kotlin's Slack in the
+[#beepiz-libraries](https://kotlinlang.slack.com/messages/beepiz-libraries) channel (you can get
+an invitation [here](http://slack.kotlinlang.org/)).
 
 ## Usage
 
@@ -103,25 +104,27 @@ again later.
 
 Here's a basic example that just logs the characteristics (using
 [the `print()` method defined here](
-https://github.com/Beepiz/BleGattCoroutines/blob/e033fdeb82738bc490fa85968ad1ebc8482d2219/app/src/main/java/com/beepiz/blegattcoroutines/sample/extensions/GattPrint.kt#L12)
+https://github.com/Beepiz/BleGattCoroutines/blob/dd562dc49e5623bfc874dd9ff37d62db63c04932/sample-common/src/main/java/com/beepiz/blegattcoroutines/sample/common/extensions/GattPrint.kt#L15)
 ):
 ```kotlin
-fun BluetoothDevice.logGattServices(tag: String = "BleGattCoroutines") = launch(UI) {
+suspend fun BluetoothDevice.logGattServices(tag: String = "BleGattCoroutines") {
     val deviceConnection = GattConnection(bluetoothDevice = this@logGattServices)
-    deviceConnection.connect() // Suspends until connection is established
-    val gattServices = deviceConnection.discoverServices() // Suspends until completed
-    gattServices.forEach {
-        it.characteristics.forEach {
-            try { 
-                deviceConnection.readCharacteristic(it) // Suspends until characteristic is read
-            } catch (e: Exception) {
-                Log.e(tag, "Couldn't read characteristic with uuid: ${it.uuid}", e)
+    try {
+        deviceConnection.connect() // Suspends until connection is established
+        val gattServices = deviceConnection.discoverServices() // Suspends until completed
+        gattServices.forEach {
+            it.characteristics.forEach {
+                try { 
+                    deviceConnection.readCharacteristic(it) // Suspends until characteristic is read
+                } catch (e: Exception) {
+                    Log.e(tag, "Couldn't read characteristic with uuid: ${it.uuid}", e)
+                }
             }
+            Log.d(tag, it.print(printCharacteristics = true))
         }
-        Log.v(tag, it.print(printCharacteristics = true))
+    } finally {
+        deviceConnection.close() // Close when no longer used. Also triggers disconnect by default. 
     }
-    deviceConnection.disconnect() // Disconnection is optional. Useful if you don't close and reconnect later.
-    deviceConnection.close() // Close when no longer used it NOT optional 
 }
 ```
 
@@ -136,7 +139,7 @@ you want.
 private val myEddystoneUrlBeaconMacAddress = "F2:D6:43:93:70:7A"
 private val defaultDeviceMacAddress = myEddystoneUrlBeaconMacAddress
 
-fun logNameAndAppearance(deviceMacAddress: String = defaultDeviceMacAddress) = launch(UI) {
+suspend fun logNameAndAppearance(deviceMacAddress: String = defaultDeviceMacAddress) {
     deviceFor(deviceMacAddress).useBasic { device, services ->
         services.forEach { Timber.d("Service found with UUID: ${it.uuid}") }
         with(GenericAccess) {
@@ -162,58 +165,48 @@ D/MainViewModel$logNameAndAppearance: Device name: eddystone Config
 I/MainViewModel$logNameAndAppearance: Disconnected!
 I/MainViewModel$logNameAndAppearance: Closed!
 ```
-This proves our library is working and that **WE MADE GATT GREAT AGAIN!**
+This proves our library is working and that Bluetooth GATT can be functional.
 
 ## Download
 
 ### Gradle instructions
-Make sure you have `jcenter()` in the repositories defined in your project's
-(root) `build.gradle` file (default for new Android Studio projects).
 
-Add the version of the library to not repeat yourself if you use multiple
-artifacts, and make sure their versions are in sync by adding an ext property
-into your root project `build.gradle` file:
+BleGattCoroutines is published on MavenCentral.
+
+The following artifacts are published, use the ones you need:
+
+```kotlin
+implementation("com.beepiz.blegattcoroutines:blegattcoroutines-core:0.5.0")
+implementation("com.beepiz.blegattcoroutines:blegattcoroutines-genericaccess:0.5.0")
+```
+
+#### Dev versions
+
+Let's say you need a new feature or a fix that did not make it to a release yet:
+
+You can grab it in the latest dev version by adding the corresponding repository and
+changing the library version to the dev version you need in your root project `build.gradle` file:
+
 ```groovy
-allProjects {
-    ext {
-        blegattcoroutines_version = '0.1.0'
+repositories {
+    google()
+    mavenCentral()
+    // Add the repo below:
+    maven(url = "https://s01.oss.sonatype.org/content/repositories/snapshots") {
+        mavenContent {
+            includeGroup("com.beepiz.blegattcoroutines")
+            snapshotsOnly()
+        }
     }
 }
+
+// Switch the version to a snapshot
+implementation("com.beepiz.blegattcoroutines:blegattcoroutines-core:0.5.1-SNAPSHOT")
+implementation("com.beepiz.blegattcoroutines:blegattcoroutines-genericaccess:0.5.1-SNAPSHOT")
 ```
-Here are all the artifacts of this library. Just use the ones you need:
-```groovy
-implementation "com.beepiz.blegattcoroutines:blegattcoroutines-core:$blegattcoroutines_version"
-implementation "com.beepiz.blegattcoroutines:blegattcoroutines-genericaccess:$blegattcoroutines_version"
-```
-#### Snapshots
-Let's say you need a new feature or a fix that did
-not make it to a release yet:
-
-You can grab it in the latest snapshot by adding the
-snapshots repository and changing the library version to the -SNAPSHOT
-version in your root project `build.gradle` file:
-
-```groovy
-allProjects {
-    repositories {
-        google()
-        jcenter() // Add snapshots repo below
-        maven { url 'https://oss.jfrog.org/artifactory/oss-snapshot-local' }
-    }
-    ext {
-        blegattcoroutines_version = '0.1.0-SNAPSHOT' // Change this line
-    }
-}
-```
-
-If you need to, you can browse the deployed snapshots [here on artifactory](
-https://oss.jfrog.org/webapp/#/artifacts/browse/tree/General/oss-snapshot-local/com/beepiz/blegattcoroutines
-).
-
-### Other build systems
-For maven and alternative build-systems, check the [Bintray page](
-https://bintray.com/beepiz/maven/blegattcoroutines).
 
 ## New versions notifications
-To get notified for new versions, be sure to click on "Watch" on the
-[BleGattCoroutines Bintray page](https://bintray.com/beepiz/maven/blegattcoroutines).
+
+Releases are announced on GitHub, you can subscribe by[clicking on "Watch", then "Custom", then check "Releases"](
+https://docs.github.com/en/account-and-profile/managing-subscriptions-and-notifications-on-github/setting-up-notifications/configuring-notifications#configuring-your-watch-settings-for-an-individual-repository
+).

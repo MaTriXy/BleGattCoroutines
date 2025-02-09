@@ -2,26 +2,15 @@
 
 ## Releasing a stable, beta or alpha version
 
-1. Change the `library_version` ext property in root project's `build.gradle`
-file to a non-SNAPSHOT version.
-2. Update the `README.md` with the new version.
-3. Run `git commit -am "Prepare for release X.Y.Z"`
-(where X.Y.Z is the new version).
-4. `git tag -a vX.Y.Z -m "Version X.Y.Z"` (where X.Y.Z is the new version).
-5. Run `./gradlew clean bintrayUpload`.
-6. Run `git push origin`.
-7. Sign in on Bintray and publish the packages.
-8. Publish release on GitHub.
-6. Change the `library_version` ext property in root project back to a
--SNAPSHOT version.
-7. Run `git commit -am "Prepare next development version."`.
-8. Run `git push origin && git push origin --tags`.
+Run the interactive script
 
-## Publishing a SNAPSHOT
+Run [Releasing.kts](Releasing.main.kts) (preferably in system terminal as IDE could crash)
+with `kotlinc -script Releasing.main.kts` and follow the steps directly from the command line.
 
-1. Make sure `library_version` ext property in root project's `build.gradle`
-file is set to a -SNAPSHOT version.
-2. Run `./gradlew artifactoryPublish`. **Do it from command line,
-not from Android Studio**, as the artifacts are not uploaded when the
-gradle task is run from the IDE (as of Android Studio `3.1.0-rc01`) because
-of a yet to be reported bug.
+## Publishing a SNAPSHOT version
+
+1. Make sure the content of the [version.txt](version.txt) file is
+   set to a new `-SMAPSHOT` version on the target branch (on GitHub).
+2. Go to [this url](https://github.com/Beepiz/BleGattCoroutines/actions/workflows/publish-to-sonatype-snapshots.yml)
+3. Click the "Run workflow" white button, select the target branch, and click the green "Run workflow" button
+4. Wait (if you want) until the Workflow run completes.
